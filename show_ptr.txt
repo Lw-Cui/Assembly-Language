@@ -1,0 +1,67 @@
+assume cs:code
+data segment
+	db 'welcome to masm',0
+data ends
+
+stack segment
+	dw 16 dup(0)
+stack ends
+
+code segment
+start:
+	mov ax,data
+	mov es,ax
+	mov ax,stack
+	mov ss,ax
+	mov sp,32
+	mov dh,8
+	mov dl,3
+	mov cl,2
+	call show_str
+
+	mov ax,4c00H
+	int 21H
+
+show_str:
+	push ax
+	push bx
+	push cx
+	push dx
+	push si
+	push di
+	push ds
+
+	mov ax,160
+	mul dh
+	mov bx,ax
+
+	mov ax,2
+	mul dl
+	mov di,ax
+
+	mov ax,0B800H
+	mov ds,ax
+	mov si,0
+	mov al,cl
+	mov cx,0
+S_show:
+	mov cl,es:[si]
+	jcxz OK_show
+	mov [bx][di].0,cl
+	mov [bx][di].1,al
+	add di,2
+	inc si
+	jmp short S_show
+OK_show:
+	pop ds
+	pop di
+	pop si
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	ret
+
+code ends
+end start
+	

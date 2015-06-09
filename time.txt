@@ -1,0 +1,44 @@
+assume cs:code
+code segment
+	db '**/**/** **:**:**','$'
+Rd:	db 9,8,7,4,2,0
+Wt:	db 0,3,6,9,12,15
+
+start:
+	mov ax,code
+	mov ds,ax
+	mov si,offset Rd
+	mov di,offset Wt
+	mov cx,6
+S:
+	mov al,[si]
+	out 70h,al
+	in al,71h
+	
+	mov ah,al
+	push cx
+	mov cl,4
+	shr ah,cl
+	pop cx
+	and al,00001111b
+
+	add ah,30h
+	add al,30h
+	mov bx,0
+	mov bl,[di]
+	mov [bx],ah
+	mov [bx+1],al
+
+	inc si
+	inc di
+	loop S
+
+	mov dx,0
+	mov ah,9
+	int 21h
+
+	mov ax,4c00h
+	int 21h
+
+code ends
+end start

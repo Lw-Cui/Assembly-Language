@@ -1,0 +1,46 @@
+assume cs:code
+
+data segment
+	db "Beginner's All-purpose Symbolic INstruction Code.",0
+data ends
+
+stack segment
+	dw 16 dup(0)
+stack ends
+
+code segment
+start:
+	mov ax,data
+	mov ds,ax
+ 	mov si,0
+	mov ax,stack
+	mov ss,ax
+	mov sp,32
+	call letterc
+	
+	mov ax,4c00H
+	int 21H
+
+letterc:
+	push cx
+	push si
+	mov cx,0
+S:
+	mov cl,[si]
+	jcxz OK
+	cmp cl,'a'
+	jb next
+	cmp cl,'z'
+	ja next
+	and cl,11011111B
+	mov [si],cl
+next:
+	inc si
+	jmp short S
+OK:
+	pop si
+	pop cx
+	ret
+
+code ends
+end start

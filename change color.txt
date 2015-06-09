@@ -1,0 +1,95 @@
+assume cs:code
+
+stack segment
+	db 128 dup(0)
+stack ends
+
+code segment
+start:
+	mov ax,stack
+	mov ss,ax
+	mov sp,128
+
+	mov ax,cs
+	mov ds,ax
+	mov si,offset int9
+	mov ax,0
+	mov es,ax
+	mov di,204H
+	mov cx,offset end9-offset int9
+	cld
+	rep movsb
+
+	push es:[9*4]
+	pop es:[200]
+	push es:[9*4+2]
+	pop es:[202]
+
+	mov dx,0
+	cli
+	mov word ptr es:[9*4],204H
+	mov word ptr es:[9*4+2],0
+	sti
+
+	call delay
+
+	mov ax,4c00H
+	int 21H
+
+delay:
+	push ax
+	push bx
+
+	mov ax,0
+	mov bx,01000H
+S1:
+	sub ax,1
+	sbb bx,0
+	cmp ax,0
+	jne S1
+	cmp bx,0
+	jne S1
+
+	push bx
+	push ax
+	ret
+
+int9:
+	push ax
+	push bx
+	push cx
+	push es
+
+	pushf
+	mov ax,0
+	mov es,ax
+	call dword ptr es:[200]
+
+	mov ax,0b800H
+	mov es,ax
+
+	in al,60H
+	cmp al,0bbH
+	jne OK
+
+	cmp dx,100H
+	jmp Next
+	mov dx,0
+Next:
+	mov bx,1
+	mov cx,2000
+S:
+	mov es:[bx],dl
+	add bx,2
+	loop S
+OK:
+	inc dx
+	pop es
+	pop cx
+	pop bx
+	pop ax
+	iret
+end9:
+	nop
+code ends
+end start

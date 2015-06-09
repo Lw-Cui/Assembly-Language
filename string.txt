@@ -1,0 +1,140 @@
+assume cs:code
+stack segment
+	db 128 dup(0)
+stack ends
+
+data segment
+	db 128 dup(0)
+data ends
+
+code segment
+start:
+	mov ax,stack
+	mov ss,ax
+	mov sp,128
+
+	mov ax,data
+	mov ds,ax
+	mov si,0
+
+	mov cx,100
+S:
+	call getstr
+	loop S
+	
+	mov ax,4c00H
+	int 21H
+
+getstr:
+	push ax
+	push dx
+
+	mov ah,0
+	int 16h
+	cmp ah,0eh
+	je short Backspace
+	cmp ah,1ch
+	je short Enter
+	jmp short char
+Backspace:
+	mov ah,1
+	call int16
+	jmp short getend
+Enter:
+	mov ah,0
+	mov al,'0'
+	call int16
+	jmp short getend
+char:
+	mov ah,0
+	call int16
+	jmp short getend
+
+getend:
+	mov dh,10
+	mov dl,23
+	mov ah,2
+	call int16
+
+	pop dx
+	pop ax
+	ret
+
+int16:
+	jmp short beg
+	table dw charpush,charpop,charshow
+	top dw 0
+beg:
+	cmp ah,3
+	jb next
+	ret
+next:
+	;push bx
+
+	mov bx,0
+	mov bl,ah
+	add bl,bl
+	jmp word ptr table[bx]
+
+charpush:
+	push bx
+	mov bx,top
+	mov [si][bx],al
+	inc bx
+	mov top,bx
+	pop bx
+	ret
+
+charpop:
+	push bx
+	mov bx,top
+	cmp bx,0
+	je popend
+	mov al,[si][bx]
+	dec bx
+	mov top,bx
+popend:
+	pop bx
+	ret
+
+charshow:
+	push es
+	push ax
+	push bx
+	push cx
+	push di
+
+	mov ax,0b800H
+	mov es,ax
+	mov al,160
+	mul dh
+	mov di,ax
+	mov al,2
+	mul dl
+	add di,ax 
+
+	mov ax,top
+	mov bx,0
+Sshow:
+	cmp bx,ax
+	jnb Send
+	mov cl,[si][bx]
+	mov es:[di],cl
+	inc di
+	mov cl,00000100B
+	mov es:[di],cl
+	inc bx
+	inc di
+	jmp short Sshow
+Send:
+	mov al,' '
+	mov es:[di],al
+	
+	pop di
+	pop cx
+	pop bx
+	pop ax
+	pop es
+	ret
+code ends
+end start

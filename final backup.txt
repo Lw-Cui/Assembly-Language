@@ -1,0 +1,178 @@
+assume cs:code
+code segment
+start:
+	jmp short menu
+	chose dw 4 dup(0)
+menu:
+	call show
+	mov ah,0
+	int 13H
+	mov bx,0
+	sub al,'1'
+	mov bl,al
+	add bx,bx
+	call chose[bx]
+	cmp al,2
+	jnb menu
+	mov ax,4c00H
+	int 21H
+
+;from es:bx to dx of floppy (512byte)
+write:
+	push ax
+	push cx
+	push dx
+
+	mov ax,dx
+	mov dx,0
+	mov cx,1440
+	div cx
+	push dx
+	mov dh,al
+	mov dl,0
+
+	pop ax
+	mov cl,18
+	div cl
+	mov ch,al
+	mov cl,ah
+	inc cl
+
+	mov al,1
+	mov ah,3
+	int 13h
+	
+	pop dx
+	pop cx
+	pop ax
+	ret
+
+show:
+	push ax
+	push bx
+	push cx
+	push dx
+	push si
+	push di
+
+	call beg
+ 	s1:db '1) reset pc',0
+	s2:db '2) start system',0
+	s3:db '3) clock',0
+	s4:db '4) set clock',0
+beg:
+	pop di;get ip
+	jmp next
+	table dw s1-s1,s2-s1,s3-s1,s4-s1
+nexty:
+	mov dh,10
+	mov dl,25
+	mov ax,0
+	mov cx,4
+Sshow:
+	mov bx,ax
+	add bx,bx
+	mov si,table[bx]
+	add si,di
+	call show_str
+	inc dh
+	inc ax
+	loop Sshow
+	
+	pop di
+	pop si
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	ret 
+
+;row:dh  column:dl  from cs:si -> 0
+show_str:
+	push ax
+	push bx
+	push cx
+	push dx
+	push si
+	push di
+	push ds
+
+	mov ax,160
+	mul dh
+	mov bx,ax
+
+	mov ax,2
+	mul dl
+	mov di,ax
+
+	mov ax,0B800H
+	mov ds,ax
+	mov al,00000001B
+S_show:
+	mov cl,cs:[si]
+	jcxz OK_show
+	mov [bx][di].0,cl
+	mov [bx][di].1,al
+	add di,2
+	inc si
+	;inc al
+	jmp short S_show
+OK_show:
+	pop ds
+	pop di
+	pop si
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	ret
+
+time:
+	call action
+	t0 dw t1-t0,t2-t0,t3-t0
+	t1 db '**/**/** **:**:**',0
+	t2 db 9,8,7,4,2,0
+	t3 db 0,3,6,9,12,15
+action:
+	pop bp
+	
+	mov cx,3
+	mov bx,0
+Stime:
+	add cs:[bp],bp
+	add bx,2
+	loop Stime
+
+	mov si,0
+	mov di,0
+	mov cx,6
+S:
+	mov al,
+	out 70h,al
+	in al,71h
+	
+	mov ah,al
+	push cx
+	mov cl,4
+	shr ah,cl
+	pop cx
+	and al,00001111b
+
+	add ah,30h
+	add al,30h
+	mov bx,0
+	mov bl,Wt[di]
+	mov Tm[bx],ah
+	mov Tm[bx+1],al
+
+	inc si
+	inc di
+	loop S
+
+	mov dh,10
+	mov dl,25
+	mov si,dx
+	jmp short action
+
+code ends
+end start 

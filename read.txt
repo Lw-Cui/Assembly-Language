@@ -1,0 +1,29 @@
+;from es:bx to dx of floppy (512byte)
+write:
+	push ax
+	push cx
+	push dx
+
+	mov ax,dx
+	mov dx,0
+	mov cx,1440
+	div cx
+	push dx
+	mov dh,al
+	mov dl,0
+
+	pop ax
+	mov cl,18
+	div cl
+	mov ch,al
+	mov cl,ah
+	inc cl
+
+	mov al,1
+	mov ah,3
+	int 13h
+	
+	pop dx
+	pop cx
+	pop ax
+

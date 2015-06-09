@@ -1,0 +1,37 @@
+assume cs:code
+
+stack segment
+	dw 16 dup(0)
+stack ends
+
+code segment
+start:
+	mov ax,stack
+	mov ss,ax
+	mov sp,32
+	mov ax,4240H
+	mov dx,000FH
+	mov cx,0AH
+	call divdw
+
+	mov ax,4c00H
+	int 21H
+divdw:
+	push si
+	push di
+
+	mov si,ax
+	mov ax,dx
+	mov dx,0
+	div cx
+	mov di,ax
+	mov ax,si
+	div cx
+	mov cx,dx
+	mov dx,di
+
+	pop di
+	pop si
+	ret
+code ends
+end start

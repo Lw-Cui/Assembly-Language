@@ -1,0 +1,70 @@
+assume cs:code
+stack segment
+	db 128 dup(0)
+stack ends
+
+code segment
+start:
+	mov ax,stack
+	mov ss,ax
+	mov sp,128
+
+	mov ax,0
+	mov es,ax
+	mov di,200H
+	mov ax,cs
+	mov ds,ax
+	mov si,offset int7
+	mov cx,offset end7-offset int7
+	cld
+	rep movsb
+
+	mov word ptr es:[7ch*4],200H
+	mov word ptr es:[7ch*4+2],0H
+
+	mov ax,0b400H
+	mov es,ax
+	mov bx,0
+	mov dx,1439
+	
+	mov ah,1
+	int 7h
+
+	mov ax,4c00H
+	int 21H
+
+int7:
+	push ax
+	push cx
+	push dx
+	push di
+
+	mov ax,dx
+	mov dx,0
+	mov cx,1440
+	div cx
+	mov di,dx
+	mov dh,al
+	mov dl,0
+
+	mov ax,di
+	mov cl,18
+	div cl
+	mov ch,al
+	mov cl,ah
+	inc cl
+
+	mov al,8
+	mov ah,3
+	int 13h
+	
+	pop di
+	pop dx
+	pop cx
+	pop ax
+	iret
+end7:
+	nop
+
+code ends
+end start 

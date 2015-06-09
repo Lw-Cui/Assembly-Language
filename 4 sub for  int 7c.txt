@@ -1,0 +1,127 @@
+assume cs:code
+
+stack segment
+	db 128 dup(0)
+stack ends
+
+code segment
+test1:
+	nop
+	nop
+start:
+	mov ax,stack
+	mov ss,ax
+	mov sp,128
+
+	mov ax,cs
+	mov ds,ax
+	mov si,offset int9
+	mov ax,0
+	mov es,ax
+	mov di,200H
+	mov cx,offset end9-offset int9
+	cld
+	rep movsb
+
+	mov word ptr es:[7ch*4],200H
+	mov word ptr es:[7ch*4+2],0
+
+	mov ah,2
+	mov al,2
+	int 7ch
+
+	mov ah,3
+	mov al,3
+	int 7ch
+
+	mov ah,4
+	int 7ch
+
+	mov ah,1
+	int 7ch
+
+	mov ax,4c00H
+	int 21H
+
+int9:
+	push ax
+	push bx
+	push cx
+	push di
+	push si
+	push es
+	push ds
+
+	jmp short set
+	table dw sub1-int9+200H,sub2-int9+200H,sub3-int9+200H,sub4-int9+200H
+	;temp dw sub1,beg,sub1-beg,sub1-beg+200H,test1,start
+	dw table
+	dw table-int9+200H
+set:
+	mov bx,0b800H
+	mov es,bx
+
+	mov bx,0
+	sub ah,1
+	add ah,ah
+	mov bl,ah
+	mov si,table-int9
+	call word ptr cs:200H[si][bx]
+
+	pop ds
+	pop es
+	pop si
+	pop di
+	pop cx
+	pop bx
+	pop ax
+	iret
+
+sub1:
+	mov cx,2000
+	mov bx,0
+S1:
+	mov byte ptr es:[bx],' '
+	add bx,2
+	loop S1
+	ret
+sub2:
+	mov cx,2000
+	mov bx,1
+S2:
+	and byte ptr es:[bx],11111000B
+	or byte ptr es:[bx],al
+	add bx,2
+	loop S2
+	ret
+sub3:
+	mov cl,4
+	shl al,cl
+	mov cx,2000
+	mov bx,1
+S3:
+	and byte ptr es:[bx],10001111B
+	or byte ptr es:[bx],al
+	add bx,2
+	loop S3
+	ret
+sub4:
+	mov cx,es
+	mov ds,cx
+	mov si,160
+	mov di,0
+	mov cx,4000
+	cld
+	rep movsb
+
+	mov bx,0
+	mov cx,80
+S4:
+	mov byte ptr es:[24*160+bx],' '
+	add bx,2
+	loop S4
+	ret
+end9:
+	nop
+code ends
+end start
